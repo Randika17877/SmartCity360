@@ -9,39 +9,180 @@
     <ui:define name="title">Smart Streetlights</ui:define>
 
     <ui:define name="content">
-        <section class="panel">
-            <p>Each light keeps its own location and state; model, wattage and colour are shared through a pool.</p>
-            <h:form>
-                <h:messages styleClass="messages" infoClass="info" errorClass="error"/>
-                <div class="formrow">
-                    <h:inputText value="#{streetlightBean.light.code}" pt:placeholder="Light code"/>
-                    <h:inputText value="#{streetlightBean.light.location}" pt:placeholder="Location"/>
-                    <h:inputText value="#{streetlightBean.light.model}" pt:placeholder="Model"/>
-                    <h:inputText value="#{streetlightBean.light.wattage}" pt:placeholder="Watts"/>
-                    <h:inputText value="#{streetlightBean.light.colour}" pt:placeholder="Colour"/>
-                    <h:commandButton value="Register light" action="#{streetlightBean.save}"/>
-                    <h:commandButton value="Show flyweight pool" action="#{streetlightBean.showFlyweight}"/>
-                </div>
-                <h:panelGroup rendered="#{streetlightBean.report != null}">
-                    <p><strong>#{streetlightBean.report.summary()}</strong></p>
-                    <ul class="log"><ui:repeat value="#{streetlightBean.report.lines}" var="line"><li>#{line}</li></ui:repeat></ul>
-                </h:panelGroup>
-            </h:form>
+        <!-- Subtitle and Flyweight Pattern Description Banner -->
+        <div style="margin-bottom: 24px; font-size: 14px; color: #475569; line-height: 1.6;">
+            <span style="display: inline-block; background: #e0e7ff; color: #3730a3; padding: 2px 10px; border-radius: 12px; font-weight: 600; font-size: 12px; margin-right: 8px;">Flyweight pattern</span>
+            Every light keeps only its own data (ID, location, fault). The configuration and the 24-hour dimming profile are shared objects from a pool.
+        </div>
 
-            <h:form>
-                <h:dataTable value="#{streetlightBean.lights}" var="s" styleClass="data">
-                    <h:column><f:facet name="header">ID</f:facet>#{s.id}</h:column>
-                    <h:column><f:facet name="header">Code</f:facet>#{s.code}</h:column>
-                    <h:column><f:facet name="header">Location</f:facet>#{s.location}</h:column>
-                    <h:column><f:facet name="header">Type</f:facet>#{s.model} · #{s.wattage}W · #{s.colour}</h:column>
-                    <h:column><f:facet name="header">State</f:facet>#{s.active ? 'ON' : 'OFF'}</h:column>
-                    <h:column>
-                        <h:commandButton value="#{s.active ? 'Switch off' : 'Switch on'}"
-                                         action="#{streetlightBean.toggle(s.id, !s.active)}"/>
-                    </h:column>
-                </h:dataTable>
-            </h:form>
-        </section>
+        <h:messages styleClass="messages" infoClass="messages info" errorClass="messages error" style="margin-bottom: 20px;"/>
+
+        <!-- Top Two Control Panels -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+            <!-- Left Panel: The city's lights (from MySQL) -->
+            <section class="panel" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); margin-top: 0;">
+                <h3 style="margin-top: 0; margin-bottom: 8px; font-size: 17px; font-weight: 700; color: #0f172a;">The city's lights (from MySQL)</h3>
+                <p style="font-size: 13px; color: #64748b; line-height: 1.5; margin-bottom: 18px;">
+                    Loads every row of street_light. In the database the shared configuration is stored once in street_light_type; in memory the lights share SharedStreetLight objects.
+                </p>
+                <h:form style="display: flex; flex-direction: column; gap: 14px;">
+                    <div>
+                        <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 6px; font-weight: 600;">Hour (0 - 23)</label>
+                        <h:inputText value="#{streetlightBean.hour}"
+                                     style="width: 80px; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-weight: 600;"/>
+                    </div>
+                    <div>
+                        <h:commandButton value="Load from MySQL" action="#{streetlightBean.loadFromMysql}"
+                                         style="background: #2563eb; color: #ffffff; border: 0; padding: 10px 22px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s ease;"/>
+                    </div>
+                </h:form>
+            </section>
+
+            <!-- Right Panel: Simulate more lights (nothing saved) -->
+            <section class="panel" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); margin-top: 0;">
+                <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 17px; font-weight: 700; color: #0f172a;">Simulate more lights (nothing saved)</h3>
+                <h:form style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                        <div>
+                            <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 4px; font-weight: 600;">Number of lights (1 - 100,000)</label>
+                            <h:inputText value="#{streetlightBean.simCount}"
+                                         style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; box-sizing: border-box;"/>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 4px; font-weight: 600;">Main-road lights (%)</label>
+                            <h:inputText value="#{streetlightBean.simMainRoadPercent}"
+                                         style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; box-sizing: border-box;"/>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                        <div>
+                            <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 4px; font-weight: 600;">Faulty lamps</label>
+                            <h:inputText value="#{streetlightBean.simFaultyCount}"
+                                         style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; box-sizing: border-box;"/>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 4px; font-weight: 600;">Hour (0 - 23)</label>
+                            <h:inputText value="#{streetlightBean.simHour}"
+                                         style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; box-sizing: border-box;"/>
+                        </div>
+                    </div>
+                    <div style="margin-top: 4px;">
+                        <h:commandButton value="Simulate" action="#{streetlightBean.simulate}"
+                                         style="background: #ffffff; color: #2563eb; border: 1px solid #2563eb; padding: 9px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s ease;"/>
+                    </div>
+                </h:form>
+            </section>
+        </div>
+
+        <!-- Telemetry & Flyweight Metrics -->
+        <h:panelGroup layout="block" rendered="#{streetlightBean.report != null}">
+            <div style="font-size: 14px; color: #475569; font-weight: 600; margin-bottom: 14px;">
+                Source: <span style="color: #0f172a;">#{streetlightBean.report.source}</span>
+            </div>
+
+            <!-- 4 KPI Metrics -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
+                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                    <div style="font-size: 26px; font-weight: 800; color: #0f172a; line-height: 1.2;">#{streetlightBean.report.totalLightsFormatted}</div>
+                    <div style="font-size: 12px; color: #64748b; margin-top: 6px;">StreetLight objects (unique data)</div>
+                </div>
+                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                    <div style="font-size: 26px; font-weight: 800; color: #2563eb; line-height: 1.2;">#{streetlightBean.report.sharedObjectsUsed}</div>
+                    <div style="font-size: 12px; color: #64748b; margin-top: 6px;">SharedStreetLight objects used (shared data)</div>
+                </div>
+                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                    <div style="font-size: 26px; font-weight: 800; color: #0f172a; line-height: 1.2;">#{streetlightBean.report.loadTimeMsFormatted}</div>
+                    <div style="font-size: 12px; color: #64748b; margin-top: 6px;">Time to load / create all lights</div>
+                </div>
+                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                    <div style="font-size: 26px; font-weight: 800; color: #0f172a; line-height: 1.2;">#{streetlightBean.report.configsInPool}</div>
+                    <div style="font-size: 12px; color: #64748b; margin-top: 6px;">Configurations in the pool</div>
+                </div>
+            </div>
+
+            <!-- Memory Consumption Comparison Panel -->
+            <section class="panel" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); margin-bottom: 24px;">
+                <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 16px; font-weight: 700; color: #0f172a;">Memory for the 24-hour dimming profiles</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px;">
+                        <div style="font-size: 24px; font-weight: 800; color: #0f172a; margin-bottom: 6px;">#{streetlightBean.report.withoutFlyweightFormatted}</div>
+                        <div style="font-size: 12px; color: #64748b; line-height: 1.4;">#{streetlightBean.report.withoutFlyweightDetails}</div>
+                    </div>
+                    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px;">
+                        <div style="font-size: 24px; font-weight: 800; color: #0f172a; margin-bottom: 6px;">#{streetlightBean.report.withFlyweightFormatted}</div>
+                        <div style="font-size: 12px; color: #64748b; line-height: 1.4;">#{streetlightBean.report.withFlyweightDetails}</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Active Operational Telemetry Panel -->
+            <section class="panel" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); margin-bottom: 24px;">
+                <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 16px; font-weight: 700; color: #0f172a;">#{streetlightBean.report.activeStatusHeader}</h3>
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid #cbd5e1; text-align: left; background: #f8fafc;">
+                            <th style="padding: 12px; font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">SHARED CONFIGURATION</th>
+                            <th style="padding: 12px; font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">OBJECT</th>
+                            <th style="padding: 12px; font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">LIGHTS USING IT</th>
+                            <th style="padding: 12px; font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">BRIGHTNESS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <ui:repeat value="#{streetlightBean.report.sharedConfigs}" var="sc">
+                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                                <td style="padding: 14px 12px; font-weight: 600; color: #0f172a;">#{sc.configuration}</td>
+                                <td style="padding: 14px 12px;">
+                                    <span style="color: #334155; font-family: monospace; font-size: 13px;">#{sc.objectId}</span>
+                                </td>
+                                <td style="padding: 14px 12px; color: #334155;">#{sc.lightsCountFormatted}</td>
+                                <td style="padding: 14px 12px; font-weight: 500; color: #0f172a;">#{sc.brightness}</td>
+                            </tr>
+                        </ui:repeat>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Sample Fixture Telemetry Inspection Table -->
+            <section class="panel" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                <h3 style="margin-top: 0; margin-bottom: 4px; font-size: 16px; font-weight: 700; color: #0f172a;">Some of the lights</h3>
+                <p style="font-size: 13px; color: #64748b; margin-top: 0; margin-bottom: 16px;">
+                    Lights with the same shared object id point to the SAME SharedStreetLight object.
+                </p>
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid #cbd5e1; text-align: left; background: #f8fafc;">
+                            <th style="padding: 12px; font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">ID</th>
+                            <th style="padding: 12px; font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">CONFIGURATION</th>
+                            <th style="padding: 12px; font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">SHARED OBJECT</th>
+                            <th style="padding: 12px; font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">LOCATION</th>
+                            <th style="padding: 12px; font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">STATE</th>
+                            <th style="padding: 12px; font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">BRIGHTNESS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <ui:repeat value="#{streetlightBean.report.sampleLights}" var="l">
+                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                                <td style="padding: 12px; font-weight: 500; color: #0f172a;">#{l.id}</td>
+                                <td style="padding: 12px; color: #334155;">#{l.configuration}</td>
+                                <td style="padding: 12px;">
+                                    <span style="color: #334155; font-family: monospace; font-size: 13px;">#{l.objectId}</span>
+                                </td>
+                                <td style="padding: 12px; color: #475569; font-size: 13px;">#{l.location}</td>
+                                <td style="padding: 12px;">
+                                    <h:panelGroup rendered="#{l.state == 'OK'}">
+                                        <span style="display: inline-block; background: #dcfce7; color: #15803d; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">OK</span>
+                                    </h:panelGroup>
+                                    <h:panelGroup rendered="#{l.state == 'FAULTY'}">
+                                        <span style="display: inline-block; background: #fee2e2; color: #b91c1c; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">FAULTY</span>
+                                    </h:panelGroup>
+                                </td>
+                                <td style="padding: 12px; font-weight: 500; color: #0f172a;">#{l.brightness}</td>
+                            </tr>
+                        </ui:repeat>
+                    </tbody>
+                </table>
+            </section>
+        </h:panelGroup>
     </ui:define>
 </ui:composition>
 </html>

@@ -9,31 +9,119 @@
     <ui:define name="title">Citizen Complaints</ui:define>
 
     <ui:define name="content">
-        <section class="panel">
-            <p>Severity 1–2 goes to local staff, 3–4 to a supervisor and 5 to the city manager.</p>
-            <h:form>
-                <h:messages styleClass="messages" infoClass="info" errorClass="error"/>
-                <div class="formrow">
-                    <h:inputText value="#{complaintBean.complaint.residentName}" pt:placeholder="Resident name"/>
-                    <h:inputText value="#{complaintBean.complaint.description}" pt:placeholder="Complaint description"/>
-                    <h:inputText value="#{complaintBean.complaint.severity}" pt:placeholder="Severity 1-5"/>
-                    <h:commandButton value="Submit complaint" action="#{complaintBean.submit}"/>
+        <!-- Subtitle and Chain of Responsibility Description Banner -->
+        <div style="margin-bottom: 24px; font-size: 14px; color: #475569; line-height: 1.6;">
+            <span style="display: inline-block; background: #e0e7ff; color: #3730a3; padding: 2px 10px; border-radius: 12px; font-weight: 600; font-size: 12px; margin-right: 8px;">Chain of Responsibility</span>
+            Citizen grievances are triaged automatically through a decoupled escalation chain (Local Staff for severity 1–2, Supervisor for 3–4, City Manager for 5).
+        </div>
+
+        <h:messages styleClass="messages" infoClass="messages info" errorClass="messages error" style="margin-bottom: 20px;"/>
+
+        <!-- Top Panel: Lodge a New Grievance -->
+        <section class="panel" style="background: #ffffff; border: 1px solid #e2e8f0; border-top: 3px solid #2563eb; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); margin-bottom: 24px; margin-top: 0;">
+            <h3 style="margin-top: 0; margin-bottom: 8px; font-size: 17px; font-weight: 700; color: #0f172a;">Lodge a Municipal Grievance</h3>
+            <p style="font-size: 13px; color: #64748b; margin-top: 0; margin-bottom: 16px;">
+                Submit an infrastructure issue (power outage, water leakage, road damage). The system routes it to the responsible municipal tier based on severity.
+            </p>
+            <h:form style="display: flex; flex-direction: column; gap: 14px;">
+                <div style="display: grid; grid-template-columns: 1.5fr 2fr 1fr auto; gap: 14px; align-items: flex-end;">
+                    <div>
+                        <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 6px; font-weight: 600;">Resident Name</label>
+                        <h:inputText value="#{complaintBean.complaint.residentName}" pt:placeholder="A. Perera"
+                                     style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; box-sizing: border-box;"/>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 6px; font-weight: 600;">Grievance Description</label>
+                        <h:inputText value="#{complaintBean.complaint.description}" pt:placeholder="Streetlight flickering near Galle Road bus stop"
+                                     style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; box-sizing: border-box;"/>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 6px; font-weight: 600;">Severity (1 - 5)</label>
+                        <h:inputText value="#{complaintBean.complaint.severity}" pt:placeholder="1-5"
+                                     style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; box-sizing: border-box;"/>
+                    </div>
+                    <div>
+                        <h:commandButton value="Submit Complaint" action="#{complaintBean.submit}"
+                                         style="background: #2563eb; color: #ffffff; border: 0; padding: 10px 22px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s ease; height: 38px;"/>
+                    </div>
                 </div>
             </h:form>
+        </section>
+
+        <!-- Complaints Table Panel -->
+        <section class="panel" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: #0f172a;">Grievance Incident Log</h3>
+                <h:panelGroup rendered="#{authBean.staffOrAdmin}">
+                    <span style="font-size: 12px; color: #047857; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 4px 10px; border-radius: 6px; font-weight: 600;">
+                        Authorized Staff / Admin View (Resolution Enabled)
+                    </span>
+                </h:panelGroup>
+                <h:panelGroup rendered="#{not authBean.staffOrAdmin}">
+                    <span style="font-size: 12px; color: #64748b; background: #f8fafc; border: 1px solid #e2e8f0; padding: 4px 10px; border-radius: 6px; font-weight: 500;">
+                        Citizen View (Read-Only Status Tracking)
+                    </span>
+                </h:panelGroup>
+            </div>
 
             <h:form>
-                <h:dataTable value="#{complaintBean.complaints}" var="c" styleClass="data">
-                    <h:column><f:facet name="header">ID</f:facet>#{c.id}</h:column>
-                    <h:column><f:facet name="header">Resident</f:facet>#{c.residentName}</h:column>
-                    <h:column><f:facet name="header">Description</f:facet>#{c.description}</h:column>
-                    <h:column><f:facet name="header">Severity</f:facet>#{c.severity}</h:column>
-                    <h:column><f:facet name="header">Assigned to</f:facet>#{c.assignedLevel.label}</h:column>
-                    <h:column><f:facet name="header">Status</f:facet>#{c.status.label}</h:column>
-                    <h:column>
-                        <h:commandButton value="Resolve" action="#{complaintBean.resolve(c.id)}"
-                                         rendered="#{c.status != 'RESOLVED'}"/>
-                    </h:column>
-                </h:dataTable>
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid #cbd5e1; text-align: left; background: #f8fafc;">
+                            <th style="padding: 12px; font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px; width: 45px;">ID</th>
+                            <th style="padding: 12px; font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px; width: 160px;">RESIDENT</th>
+                            <th style="padding: 12px; font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">DESCRIPTION</th>
+                            <th style="padding: 12px; font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px; width: 85px;">SEVERITY</th>
+                            <th style="padding: 12px; font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px; width: 170px;">ASSIGNED LEVEL</th>
+                            <th style="padding: 12px; font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px; width: 120px;">STATUS</th>
+                            <ui:fragment rendered="#{authBean.staffOrAdmin}">
+                                <th style="padding: 12px; font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px; width: 100px;">ACTION</th>
+                            </ui:fragment>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <ui:repeat value="#{complaintBean.complaints}" var="c">
+                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                                <td style="padding: 14px 12px; color: #64748b; font-weight: 600;">#0#{c.id}</td>
+                                <td style="padding: 14px 12px; font-weight: 600; color: #0f172a;">#{c.residentName}</td>
+                                <td style="padding: 14px 12px; color: #334155; line-height: 1.4;">#{c.description}</td>
+                                <td style="padding: 14px 12px;">
+                                    <ui:fragment rendered="#{c.severity le 2}">
+                                        <span style="display: inline-block; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">L#{c.severity} - Low</span>
+                                    </ui:fragment>
+                                    <ui:fragment rendered="#{c.severity eq 3 or c.severity eq 4}">
+                                        <span style="display: inline-block; background: #fffbeb; color: #b45309; border: 1px solid #fde68a; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">L#{c.severity} - Med</span>
+                                    </ui:fragment>
+                                    <ui:fragment rendered="#{c.severity ge 5}">
+                                        <span style="display: inline-block; background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">L#{c.severity} - Critical</span>
+                                    </ui:fragment>
+                                </td>
+                                <td style="padding: 14px 12px;">
+                                    <span style="display: inline-block; background: #f1f5f9; color: #334155; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">#{c.assignedLevel.label}</span>
+                                </td>
+                                <td style="padding: 14px 12px;">
+                                    <ui:fragment rendered="#{c.status eq 'RESOLVED'}">
+                                        <span style="display: inline-block; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">RESOLVED</span>
+                                    </ui:fragment>
+                                    <ui:fragment rendered="#{c.status ne 'RESOLVED'}">
+                                        <span style="display: inline-block; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">#{c.status.label}</span>
+                                    </ui:fragment>
+                                </td>
+                                <ui:fragment rendered="#{authBean.staffOrAdmin}">
+                                    <td style="padding: 14px 12px;">
+                                        <ui:fragment rendered="#{c.status ne 'RESOLVED'}">
+                                            <h:commandButton value="Resolve" action="#{complaintBean.resolve(c.id)}"
+                                                             style="background: #059669; color: #ffffff; border: 0; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.15s ease;"/>
+                                        </ui:fragment>
+                                        <ui:fragment rendered="#{c.status eq 'RESOLVED'}">
+                                            <span style="color: #94a3b8; font-size: 12px; font-weight: 500;">Closed</span>
+                                        </ui:fragment>
+                                    </td>
+                                </ui:fragment>
+                            </tr>
+                        </ui:repeat>
+                    </tbody>
+                </table>
             </h:form>
         </section>
     </ui:define>

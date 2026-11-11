@@ -35,6 +35,10 @@ public enum Operator {
         return symbol;
     }
 
+    public String getSymbol() {
+        return symbol;
+    }
+
     public static Operator fromSymbol(String symbol) {
         return Arrays.stream(values())
                 .filter(op -> op.symbol.equals(symbol))

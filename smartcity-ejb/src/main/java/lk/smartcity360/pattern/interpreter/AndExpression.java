@@ -11,8 +11,21 @@ public class AndExpression implements Expression {
         this.right = right;
     }
 
+    public Expression getLeft() { return left; }
+    public Expression getRight() { return right; }
+
     @Override
     public boolean interpret(PolicyContext context) {
         return left.interpret(context) && right.interpret(context);
+    }
+
+    @Override
+    public String toTreeString() {
+        return "(" + left.toTreeString() + " AND " + right.toTreeString() + ")";
+    }
+
+    @Override
+    public String toString() {
+        return toTreeString();
     }
 }

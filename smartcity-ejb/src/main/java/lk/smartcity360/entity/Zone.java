@@ -12,9 +12,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-/** A node in the city hierarchy (city, district, street or building). */
+/** A node in the city hierarchy (city, district, street or building), mapped to table city_zone. */
 @Entity
-@Table(name = "zones")
+@Table(name = "city_zone")
 public class Zone {
 
     @Id
@@ -34,13 +34,25 @@ public class Zone {
     @Column(name = "parent_id")
     private Long parentId;
 
+    @Column(name = "usage_kwh", nullable = false)
+    private Double usageKwh = 0.0;
+
+    @Column(name = "power_on", nullable = false)
+    private Boolean powerOn = true;
+
     public Zone() {
     }
 
     public Zone(String name, ZoneType type, Long parentId) {
+        this(name, type, parentId, 0.0, true);
+    }
+
+    public Zone(String name, ZoneType type, Long parentId, Double usageKwh, Boolean powerOn) {
         this.name = name;
         this.type = type;
         this.parentId = parentId;
+        this.usageKwh = usageKwh != null ? usageKwh : 0.0;
+        this.powerOn = powerOn != null ? powerOn : true;
     }
 
     public Long getId() { return id; }
@@ -53,4 +65,11 @@ public class Zone {
 
     public Long getParentId() { return parentId; }
     public void setParentId(Long parentId) { this.parentId = parentId; }
+
+    public Double getUsageKwh() { return usageKwh; }
+    public void setUsageKwh(Double usageKwh) { this.usageKwh = usageKwh != null ? usageKwh : 0.0; }
+
+    public Boolean getPowerOn() { return powerOn; }
+    public void setPowerOn(Boolean powerOn) { this.powerOn = powerOn != null ? powerOn : true; }
+    public boolean isPowerOn() { return powerOn != null && powerOn; }
 }

@@ -8,8 +8,11 @@
         <class>lk.smartcity360.entity.Zone</class>
         <class>lk.smartcity360.entity.Complaint</class>
         <class>lk.smartcity360.entity.Streetlight</class>
+        <class>lk.smartcity360.entity.StreetLightType</class>
+        <class>lk.smartcity360.entity.StreetLightRecord</class>
         <class>lk.smartcity360.entity.EnergyReading</class>
         <class>lk.smartcity360.entity.CityPolicy</class>
+        <class>lk.smartcity360.entity.PolicyHistory</class>
         <class>lk.smartcity360.entity.User</class>
         <exclude-unlisted-classes>true</exclude-unlisted-classes>
         <properties>

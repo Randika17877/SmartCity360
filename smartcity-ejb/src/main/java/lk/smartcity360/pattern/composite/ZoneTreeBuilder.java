@@ -17,9 +17,13 @@ public final class ZoneTreeBuilder {
     public static Map<Long, CityComponent> index(List<Zone> zones) {
         Map<Long, CityComponent> nodes = new LinkedHashMap<>();
         for (Zone zone : zones) {
-            nodes.put(zone.getId(), zone.getType() == ZoneType.BUILDING
-                    ? new Building(zone.getName())
-                    : new ZoneGroup(zone.getName()));
+            if (zone.getType() == ZoneType.BUILDING) {
+                double usage = zone.getUsageKwh() != null ? zone.getUsageKwh() : 0.0;
+                boolean power = zone.isPowerOn();
+                nodes.put(zone.getId(), new Building(zone.getName(), usage, power));
+            } else {
+                nodes.put(zone.getId(), new ZoneGroup(zone.getName()));
+            }
         }
         for (Zone zone : zones) {
             if (nodes.get(zone.getParentId()) instanceof ZoneGroup parent) {

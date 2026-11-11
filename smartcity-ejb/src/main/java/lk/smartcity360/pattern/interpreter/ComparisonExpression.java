@@ -13,8 +13,23 @@ public class ComparisonExpression implements Expression {
         this.target = target;
     }
 
+    public String getVariable() { return variable; }
+    public Operator getOperator() { return operator; }
+    public double getTarget() { return target; }
+
     @Override
     public boolean interpret(PolicyContext context) {
         return operator.test(context.get(variable), target);
+    }
+
+    @Override
+    public String toTreeString() {
+        String num = (target == (long) target) ? String.valueOf((long) target) : String.valueOf(target);
+        return variable + " " + operator.getSymbol() + " " + num;
+    }
+
+    @Override
+    public String toString() {
+        return toTreeString();
     }
 }

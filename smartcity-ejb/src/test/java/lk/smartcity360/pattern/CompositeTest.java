@@ -77,6 +77,51 @@ class CompositeTest {
         assertEquals(ZoneType.STREET, ZoneType.BUILDING.requiredParent());
     }
 
+    @Test
+    void usageAddsUpAtEveryLevel() {
+        ZoneGroup city = new ZoneGroup("Colombo");
+        ZoneGroup district = new ZoneGroup("Colombo 03");
+        ZoneGroup street = new ZoneGroup("Galle Road");
+
+        Building mall = new Building("Shopping Mall", 450.00, true);
+        Building hospital = new Building("City Hospital", 380.50, true);
+
+        street.add(mall);
+        street.add(hospital);
+        district.add(street);
+        city.add(district);
+
+        assertEquals(450.00, mall.getUsage(), 0.001);
+        assertEquals(380.50, hospital.getUsage(), 0.001);
+        assertEquals(830.50, street.getUsage(), 0.001);
+        assertEquals(830.50, district.getUsage(), 0.001);
+        assertEquals(830.50, city.getUsage(), 0.001);
+    }
+
+    @Test
+    void powerSwitchCascadesAcrossHierarchy() {
+        ZoneGroup city = new ZoneGroup("Colombo");
+        Building mall = new Building("Shopping Mall", 450.00, true);
+        Building hospital = new Building("City Hospital", 380.50, true);
+        city.add(mall);
+        city.add(hospital);
+
+        assertTrue(city.isPowerOn());
+        assertTrue(mall.isPowerOn());
+        assertTrue(hospital.isPowerOn());
+
+        city.setPower(false);
+
+        org.junit.jupiter.api.Assertions.assertFalse(city.isPowerOn());
+        org.junit.jupiter.api.Assertions.assertFalse(mall.isPowerOn());
+        org.junit.jupiter.api.Assertions.assertFalse(hospital.isPowerOn());
+
+        city.setPower(true);
+        assertTrue(city.isPowerOn());
+        assertTrue(mall.isPowerOn());
+        assertTrue(hospital.isPowerOn());
+    }
+
     private static Zone zone(Long id, String name, ZoneType type, Long parent) throws Exception {
         Zone zone = new Zone(name, type, parent);
         Field field = Zone.class.getDeclaredField("id");

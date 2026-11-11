@@ -4,4 +4,8 @@ package lk.smartcity360.pattern.interpreter;
 public interface Expression {
 
     boolean interpret(PolicyContext context);
+
+    default String toTreeString() {
+        return toString();
+    }
 }

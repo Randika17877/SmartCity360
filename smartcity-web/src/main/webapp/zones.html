@@ -6,44 +6,285 @@
       xmlns:pt="jakarta.faces.passthrough">
 <ui:composition template="/WEB-INF/templates/layout.html">
     <ui:define name="eyebrow">COMPOSITE PATTERN</ui:define>
-    <ui:define name="title">City Zones</ui:define>
+    <ui:define name="title">Smart zone hierarchy</ui:define>
 
     <ui:define name="content">
-        <section class="panel">
-            <p>A city contains districts, districts contain streets, streets contain buildings.
-               Choose the type and give the ID of its parent (cities have none).</p>
-            <h:form>
-                <h:messages styleClass="messages" infoClass="info" errorClass="error"/>
-                <div class="formrow">
-                    <h:inputText value="#{zoneBean.zone.name}" pt:placeholder="Zone name"/>
-                    <h:selectOneMenu value="#{zoneBean.zone.type}">
-                        <f:selectItems value="#{zoneBean.types}" var="t" itemValue="#{t}" itemLabel="#{t}"/>
-                    </h:selectOneMenu>
-                    <h:inputText value="#{zoneBean.zone.parentId}" pt:placeholder="Parent ID"/>
-                    <h:commandButton value="Save zone" action="#{zoneBean.save}"/>
-                </div>
-            </h:form>
+        <style>
+            .tree-node-row {
+                border-bottom: 1px solid #f1f5f9;
+                transition: background-color 0.15s ease;
+            }
+            .tree-node-row:hover {
+                background-color: #f8fafc;
+            }
+            .tree-toggle-btn {
+                background: transparent;
+                border: 0;
+                padding: 2px 4px;
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 4px;
+                outline: none;
+            }
+            .tree-toggle-btn:hover {
+                background: #e2e8f0;
+            }
+            .tree-chevron {
+                display: inline-block;
+                font-size: 10px;
+                color: #64748b;
+                transition: transform 0.2s ease;
+                transform: rotate(0deg);
+                line-height: 1;
+            }
+            .tree-chevron.collapsed {
+                transform: rotate(-90deg);
+            }
+            .tree-parent-title {
+                cursor: pointer;
+                user-select: none;
+            }
+            .tree-parent-title:hover {
+                color: #2563eb !important;
+            }
+        </style>
 
-            <h:dataTable value="#{zoneBean.zones}" var="z" styleClass="data">
-                <h:column><f:facet name="header">ID</f:facet>#{z.id}</h:column>
-                <h:column><f:facet name="header">Name</f:facet>#{z.name}</h:column>
-                <h:column><f:facet name="header">Type</f:facet>#{z.type}</h:column>
-                <h:column><f:facet name="header">Parent ID</f:facet>#{z.parentId}</h:column>
-            </h:dataTable>
+        <!-- Subtitle and Composite pattern description banner -->
+        <div style="margin-bottom: 22px; font-size: 14px; color: #475569; line-height: 1.6;">
+            <span style="display: inline-block; background: #e0e7ff; color: #3730a3; padding: 2px 10px; border-radius: 12px; font-weight: 600; font-size: 12px; margin-right: 8px;">Composite pattern</span>
+            City, district, street and building share one interface, so "shutdown power" and "report usage" are the same call at every level. The city is saved in MySQL (table city_zone).
+        </div>
+
+        <h:messages styleClass="messages" infoClass="messages info" errorClass="messages error" style="margin-bottom: 20px;"/>
+
+        <!-- Top Two Action Panels Grid -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px;">
+            <!-- Left Panel: Switch the power at any level -->
+            <section class="panel" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 17px; font-weight: 700; color: #0f172a;">Switch the power at any level</h3>
+                <h:form style="display: flex; flex-direction: column; gap: 16px;">
+                    <div>
+                        <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 6px; font-weight: 500;">City, district, street or building</label>
+                        <h:selectOneMenu value="#{zoneBean.targetZoneId}"
+                                         style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: #fff; color: #1e293b; box-sizing: border-box;">
+                            <f:selectItems value="#{zoneBean.switchableZones}" var="z"
+                                           itemValue="#{z.id}" itemLabel="#{z.name}"/>
+                        </h:selectOneMenu>
+                    </div>
+                    <div style="display: flex; gap: 12px; align-items: center; margin-top: 4px;">
+                        <h:commandButton value="Shutdown power" action="#{zoneBean.shutdownPower}"
+                                         style="background: #dc2626; color: #ffffff; border: 0; padding: 9px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s ease;"/>
+                        <h:commandButton value="Restore power" action="#{zoneBean.restorePower}"
+                                         style="background: #ffffff; color: #2563eb; border: 1px solid #cbd5e1; padding: 9px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s ease;"/>
+                    </div>
+                </h:form>
+            </section>
+
+            <!-- Right Panel: The city grows: add a building -->
+            <section class="panel" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 17px; font-weight: 700; color: #0f172a;">The city grows: add a building</h3>
+                <h:form style="display: flex; flex-direction: column; gap: 14px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                        <div>
+                            <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 6px; font-weight: 500;">Street</label>
+                            <h:selectOneMenu value="#{zoneBean.selectedStreetId}"
+                                             style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: #fff; color: #1e293b; box-sizing: border-box;">
+                                <f:selectItems value="#{zoneBean.streets}" var="s"
+                                               itemValue="#{s.id}" itemLabel="#{s.name}"/>
+                            </h:selectOneMenu>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 6px; font-weight: 500;">Building name</label>
+                            <h:inputText value="#{zoneBean.newBuildingName}" pt:placeholder="EV Charging Station"
+                                         style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; box-sizing: border-box; color: #1e293b;"/>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: flex-end;">
+                        <div>
+                            <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 6px; font-weight: 500;">Usage (kWh)</label>
+                            <h:inputText value="#{zoneBean.newBuildingUsage}" pt:placeholder="75"
+                                         style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; box-sizing: border-box; color: #1e293b;"/>
+                        </div>
+                        <div>
+                            <h:commandButton value="Add building" action="#{zoneBean.addBuilding}"
+                                             style="width: 100%; background: #2563eb; color: #ffffff; border: 0; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s ease;"/>
+                        </div>
+                    </div>
+                </h:form>
+            </section>
+        </div>
+
+        <!-- City Tree Hierarchical Table with Expand/Collapse -->
+        <section class="panel" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                <h3 style="margin: 0; font-size: 18px; font-weight: 700; color: #0f172a;">
+                    City tree - total usage #{zoneBean.totalUsageFormatted}
+                </h3>
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" onclick="expandAllTreeNodes()"
+                            style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">
+                        Expand all
+                    </button>
+                    <button type="button" onclick="collapseAllTreeNodes()"
+                            style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">
+                        Collapse all
+                    </button>
+                </div>
+            </div>
+
+            <div style="overflow-x: auto;">
+                <table id="cityTreeTable" style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.6px; width: 45%;">NAME</th>
+                            <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.6px; width: 20%;">LEVEL</th>
+                            <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.6px; width: 20%;">USAGE</th>
+                            <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.6px; width: 15%;">POWER</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <ui:repeat value="#{zoneBean.treeItems}" var="item">
+                            <tr class="tree-node-row"
+                                data-node-id="#{item.id}"
+                                data-parent-id="#{item.parentId == null ? '0' : item.parentId}"
+                                data-has-children="#{item.hasChildren}"
+                                data-expanded="true">
+
+                                <!-- Indented Name with Clickable Toggle Icon -->
+                                <td style="padding: 11px 16px; padding-left: #{item.indentPx + 16}px; color: #0f172a; white-space: nowrap;">
+                                    <div style="display: inline-flex; align-items: center; gap: 6px;">
+                                        <!-- Expand/Collapse Chevron Button for nodes with children -->
+                                        <h:panelGroup rendered="#{item.hasChildren}">
+                                            <button type="button" class="tree-toggle-btn"
+                                                    onclick="toggleTreeNode('#{item.id}')"
+                                                    title="Click to show/hide child zones">
+                                                <span class="tree-chevron" id="chevron-#{item.id}">▼</span>
+                                            </button>
+                                        </h:panelGroup>
+
+                                        <!-- Leaf spacer dot for buildings -->
+                                        <h:panelGroup rendered="#{!item.hasChildren}">
+                                            <span style="display: inline-block; width: 18px; text-align: center; color: #94a3b8; font-size: 11px;">•</span>
+                                        </h:panelGroup>
+
+                                        <!-- Name Label: Clicking on parent name also toggles! -->
+                                        <h:panelGroup rendered="#{item.hasChildren}">
+                                            <span class="tree-parent-title"
+                                                  onclick="toggleTreeNode('#{item.id}')"
+                                                  style="color: #0f172a; font-weight: #{item.depth == 0 ? 800 : (item.depth == 1 ? 700 : 600)};">
+                                                #{item.name}
+                                            </span>
+                                        </h:panelGroup>
+
+                                        <h:panelGroup rendered="#{!item.hasChildren}">
+                                            <span style="color: #334155;">#{item.name}</span>
+                                        </h:panelGroup>
+                                    </div>
+                                </td>
+
+                                <!-- Level Name -->
+                                <td style="padding: 11px 16px; color: #64748b; font-size: 13px;">
+                                    #{item.level}
+                                </td>
+
+                                <!-- Aggregated or Individual Usage -->
+                                <td style="padding: 11px 16px; color: #1e293b; font-weight: #{item.building ? 'normal' : '600'}; font-variant-numeric: tabular-nums;">
+                                    #{item.usageFormatted}
+                                </td>
+
+                                <!-- Power Status Badge (Shown for buildings) -->
+                                <td style="padding: 11px 16px;">
+                                    <h:panelGroup rendered="#{item.building and item.powerOn}">
+                                        <span style="display: inline-block; background: #dcfce7; color: #15803d; padding: 2px 10px; border-radius: 12px; font-weight: 700; font-size: 11px; letter-spacing: 0.5px;">ON</span>
+                                    </h:panelGroup>
+                                    <h:panelGroup rendered="#{item.building and not item.powerOn}">
+                                        <span style="display: inline-block; background: #fee2e2; color: #b91c1c; padding: 2px 10px; border-radius: 12px; font-weight: 700; font-size: 11px; letter-spacing: 0.5px;">OFF</span>
+                                    </h:panelGroup>
+                                </td>
+                            </tr>
+                        </ui:repeat>
+                    </tbody>
+                </table>
+            </div>
         </section>
 
-        <section class="panel">
-            <h3>Broadcast a command</h3>
-            <p>Sends one command to a zone; the Composite forwards it to every zone and building beneath it.</p>
-            <h:form>
-                <div class="formrow">
-                    <h:inputText value="#{zoneBean.targetZoneId}" pt:placeholder="Zone ID"/>
-                    <h:inputText value="#{zoneBean.command}" pt:placeholder="Command"/>
-                    <h:commandButton value="Broadcast" action="#{zoneBean.broadcast}"/>
-                </div>
-            </h:form>
-            <ul class="log"><ui:repeat value="#{zoneBean.broadcastLog}" var="line"><li>#{line}</li></ui:repeat></ul>
-        </section>
+        <!-- Reset The City Button -->
+        <h:form style="margin-top: 10px;">
+            <h:commandButton value="Reset the city" action="#{zoneBean.resetCity}"
+                             style="background: #ffffff; color: #2563eb; border: 1px solid #cbd5e1; padding: 9px 18px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s ease;"/>
+        </h:form>
+
+        <!-- Interactive Tree Expand/Collapse Script -->
+        <script>
+            function toggleTreeNode(nodeId) {
+                const row = document.querySelector('tr[data-node-id="' + nodeId + '"]');
+                if (!row) return;
+
+                const isCurrentlyExpanded = row.getAttribute('data-expanded') !== 'false';
+                const chevron = document.getElementById('chevron-' + nodeId);
+
+                if (isCurrentlyExpanded) {
+                    // Collapse: hide all direct and indirect children
+                    row.setAttribute('data-expanded', 'false');
+                    if (chevron) chevron.classList.add('collapsed');
+                    hideDescendantRows(nodeId);
+                } else {
+                    // Expand: show direct children, and recursively restore expanded sub-branches
+                    row.setAttribute('data-expanded', 'true');
+                    if (chevron) chevron.classList.remove('collapsed');
+                    showChildrenRows(nodeId);
+                }
+            }
+
+            function hideDescendantRows(parentId) {
+                const children = document.querySelectorAll('tr[data-parent-id="' + parentId + '"]');
+                children.forEach(function(childRow) {
+                    childRow.style.display = 'none';
+                    const childId = childRow.getAttribute('data-node-id');
+                    hideDescendantRows(childId);
+                });
+            }
+
+            function showChildrenRows(parentId) {
+                const children = document.querySelectorAll('tr[data-parent-id="' + parentId + '"]');
+                children.forEach(function(childRow) {
+                    childRow.style.display = '';
+                    const childId = childRow.getAttribute('data-node-id');
+                    const isChildExpanded = childRow.getAttribute('data-expanded') !== 'false';
+                    if (isChildExpanded) {
+                        showChildrenRows(childId);
+                    }
+                });
+            }
+
+            function expandAllTreeNodes() {
+                document.querySelectorAll('tr.tree-node-row').forEach(function(row) {
+                    row.style.display = '';
+                    row.setAttribute('data-expanded', 'true');
+                });
+                document.querySelectorAll('.tree-chevron').forEach(function(chev) {
+                    chev.classList.remove('collapsed');
+                });
+            }
+
+            function collapseAllTreeNodes() {
+                // Keep only top-level root rows visible
+                document.querySelectorAll('tr.tree-node-row').forEach(function(row) {
+                    const parentId = row.getAttribute('data-parent-id');
+                    if (parentId === '0' || !parentId) {
+                        row.style.display = '';
+                        row.setAttribute('data-expanded', 'false');
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+                document.querySelectorAll('.tree-chevron').forEach(function(chev) {
+                    chev.classList.add('collapsed');
+                });
+            }
+        </script>
     </ui:define>
 </ui:composition>
 </html>

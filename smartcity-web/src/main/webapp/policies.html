@@ -9,30 +9,176 @@
     <ui:define name="title">City Policies</ui:define>
 
     <ui:define name="content">
-        <section class="panel">
-            <p>Rules are comparisons (<code>&gt; &gt;= &lt; &lt;= == !=</code>) joined with <code>AND</code> / <code>OR</code>;
-               <code>AND</code> binds tighter. Variables available to the test: <code>noiseDb</code>, <code>hour</code>.
-               Example: <code>noiseDb &gt; 60 AND hour &gt;= 22</code>.</p>
-            <h:form>
-                <h:messages styleClass="messages" infoClass="info" errorClass="error"/>
-                <div class="formrow">
-                    <h:inputText value="#{policyBean.policy.name}" pt:placeholder="Policy name"/>
-                    <h:inputText value="#{policyBean.policy.expression}" pt:placeholder="noiseDb > 60 AND hour >= 22"/>
-                    <h:commandButton value="Save policy" action="#{policyBean.save}"/>
-                </div>
-                <div class="formrow">
-                    <h:inputText value="#{policyBean.noiseDb}" pt:placeholder="Sample noiseDb"/>
-                    <h:inputText value="#{policyBean.hour}" pt:placeholder="Sample hour"/>
-                    <h:commandButton value="Test expression" action="#{policyBean.evaluate}"/>
-                </div>
-                <h:outputText value="#{policyBean.testResult}" styleClass="result"/>
-            </h:form>
+        <!-- Subtitle and Interpreter Pattern Description Banner -->
+        <div style="margin-bottom: 24px; font-size: 14px; color: #475569; line-height: 1.6;">
+            <span style="display: inline-block; background: #e0e7ff; color: #3730a3; padding: 2px 10px; border-radius: 12px; font-weight: 600; font-size: 12px; margin-right: 8px;">Interpreter pattern</span>
+            Rules are stored as text in MySQL, parsed into an expression tree, and evaluated with the current values. Operators: &gt; &gt;= &lt; &lt;= == !=, keywords AND OR NOT, brackets ( ).
+        </div>
 
-            <h:dataTable value="#{policyBean.policies}" var="p" styleClass="data">
-                <h:column><f:facet name="header">Name</f:facet>#{p.name}</h:column>
-                <h:column><f:facet name="header">Expression</f:facet><code>#{p.expression}</code></h:column>
-                <h:column><f:facet name="header">Enabled</f:facet>#{p.enabled ? 'Yes' : 'No'}</h:column>
-            </h:dataTable>
+        <h:messages styleClass="messages" infoClass="messages info" errorClass="messages error" style="margin-bottom: 20px;"/>
+
+        <!-- Top Panel: The city's rules -->
+        <section class="panel" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); margin-bottom: 24px; margin-top: 0;">
+            <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 17px; font-weight: 700; color: #0f172a;">The city's rules</h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 8px;">
+                <thead>
+                    <tr style="border-bottom: 1px solid #cbd5e1; text-align: left; background: #f8fafc;">
+                        <th style="padding: 12px; font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px; width: 45px;">#</th>
+                        <th style="padding: 12px; font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px; width: 180px;">POLICY</th>
+                        <th style="padding: 12px; font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">RULE TEXT</th>
+                        <th style="padding: 12px; font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">PARSED AS (EXPRESSION TREE)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <ui:repeat value="#{policyBean.policyRows}" var="r">
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td style="padding: 14px 12px; color: #64748b; font-weight: 600;">#{r.index}</td>
+                            <td style="padding: 14px 12px; font-weight: 700; color: #0f172a;">#{r.name}</td>
+                            <td style="padding: 14px 12px; font-family: monospace; font-size: 13px; color: #1e293b; line-height: 1.5;">#{r.expression}</td>
+                            <td style="padding: 14px 12px; font-family: monospace; font-size: 13px; color: #475569; line-height: 1.5;">#{r.parsedTree}</td>
+                        </tr>
+                    </ui:repeat>
+                </tbody>
+            </table>
+            <h:form style="margin-top: 14px;">
+                <h:commandButton value="Reset the rules" action="#{policyBean.resetRules}"
+                                 style="background: #ffffff; color: #2563eb; border: 1px solid #cbd5e1; padding: 7px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s ease;"/>
+            </h:form>
+        </section>
+
+        <!-- Middle Two Action Cards Grid -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+            <!-- Left Card: Check an event -->
+            <section class="panel" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); margin-top: 0;">
+                <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 17px; font-weight: 700; color: #0f172a;">Check an event</h3>
+                <h:form style="display: flex; flex-direction: column; gap: 14px;">
+                    <div>
+                        <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 6px; font-weight: 500;">Policy</label>
+                        <h:selectOneMenu value="#{policyBean.selectedCheckPolicyId}"
+                                         style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: #fff; color: #1e293b; box-sizing: border-box;">
+                            <f:selectItems value="#{policyBean.policies}" var="p"
+                                           itemValue="#{p.id}" itemLabel="#{p.name}"/>
+                        </h:selectOneMenu>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 6px; font-weight: 500;">Values</label>
+                        <h:inputText value="#{policyBean.checkValues}" pt:placeholder="hour=23, noise=65"
+                                     style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; box-sizing: border-box;"/>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 16px; margin-top: 4px;">
+                        <h:commandButton value="Check" action="#{policyBean.checkEvent}"
+                                         style="background: #2563eb; color: #ffffff; border: 0; padding: 9px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s ease;"/>
+                        <h:panelGroup rendered="#{policyBean.checkResult != null}">
+                            <h:panelGroup rendered="#{policyBean.checkMatched != null and policyBean.checkMatched}">
+                                <span style="display: inline-block; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 700;">#{policyBean.checkResult}</span>
+                            </h:panelGroup>
+                            <h:panelGroup rendered="#{policyBean.checkMatched != null and not policyBean.checkMatched}">
+                                <span style="display: inline-block; background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 700;">#{policyBean.checkResult}</span>
+                            </h:panelGroup>
+                            <h:panelGroup rendered="#{policyBean.checkMatched == null}">
+                                <span style="color: #be123c; font-size: 13px; font-weight: 600;">#{policyBean.checkResult}</span>
+                            </h:panelGroup>
+                        </h:panelGroup>
+                    </div>
+                </h:form>
+            </section>
+
+            <!-- Right Card: Update a rule (no restart) -->
+            <section class="panel" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); margin-top: 0;">
+                <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 17px; font-weight: 700; color: #0f172a;">Update a rule (no restart)</h3>
+                <h:form style="display: flex; flex-direction: column; gap: 14px;">
+                    <div>
+                        <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 6px; font-weight: 500;">Policy</label>
+                        <h:selectOneMenu value="#{policyBean.selectedUpdatePolicyId}"
+                                         style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: #fff; color: #1e293b; box-sizing: border-box;">
+                            <f:selectItems value="#{policyBean.policies}" var="p"
+                                           itemValue="#{p.id}" itemLabel="#{p.name}"/>
+                        </h:selectOneMenu>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 6px; font-weight: 500;">New rule</label>
+                        <h:inputText value="#{policyBean.newRuleText}" pt:placeholder="(hour &gt;= 22 OR hour &lt; 6) AND noise &lt;= 50 OR (hour &gt;= 6 AND hour &lt; 22) AND noise &lt;= 70"
+                                     style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; box-sizing: border-box;"/>
+                    </div>
+                    <div style="margin-top: 4px;">
+                        <h:commandButton value="Update" action="#{policyBean.updateRule}"
+                                         style="background: #2563eb; color: #ffffff; border: 0; padding: 9px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s ease;"/>
+                    </div>
+                </h:form>
+            </section>
+        </div>
+
+        <!-- Rule change history (saved in MySQL) -->
+        <section class="panel" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); margin-bottom: 24px;">
+            <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 17px; font-weight: 700; color: #0f172a;">Rule change history (saved in MySQL)</h3>
+            <h:panelGroup rendered="#{empty policyBean.history}">
+                <div style="padding: 12px 0; color: #64748b; font-size: 14px;">No rule has been changed yet.</div>
+            </h:panelGroup>
+            <h:panelGroup rendered="#{not empty policyBean.history}">
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid #cbd5e1; text-align: left; background: #f8fafc;">
+                            <th style="padding: 12px; font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px; width: 180px;">CHANGED</th>
+                            <th style="padding: 12px; font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px; width: 220px;">POLICY</th>
+                            <th style="padding: 12px; font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">OLD RULE</th>
+                            <th style="padding: 12px; font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">NEW RULE</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <ui:repeat value="#{policyBean.history}" var="h">
+                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                                <td style="padding: 12px; color: #64748b; font-size: 13px;">#{h.formattedChangedAt}</td>
+                                <td style="padding: 12px; font-weight: 600; color: #0f172a;">#{h.policyName}</td>
+                                <td style="padding: 12px; font-family: monospace; font-size: 13px; color: #dc2626;">#{h.oldRule}</td>
+                                <td style="padding: 12px; font-family: monospace; font-size: 13px; color: #16a34a; font-weight: 600;">#{h.newRule}</td>
+                            </tr>
+                        </ui:repeat>
+                    </tbody>
+                </table>
+            </h:panelGroup>
+        </section>
+
+        <!-- Try your own rule -->
+        <section class="panel" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+            <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 17px; font-weight: 700; color: #0f172a;">Try your own rule</h3>
+            <h:form style="display: flex; flex-direction: column; gap: 14px;">
+                <div style="display: grid; grid-template-columns: 2fr 1.5fr auto; gap: 16px; align-items: flex-end;">
+                    <div>
+                        <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 6px; font-weight: 500;">Rule</label>
+                        <h:inputText value="#{policyBean.customRule}" pt:placeholder="noise &lt;= 70 AND hour &lt; 22"
+                                     style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; box-sizing: border-box;"/>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 6px; font-weight: 500;">Values</label>
+                        <h:inputText value="#{policyBean.customValues}" pt:placeholder="noise=75, hour=10"
+                                     style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; box-sizing: border-box;"/>
+                    </div>
+                    <div>
+                        <h:commandButton value="Evaluate" action="#{policyBean.evaluateCustom}"
+                                         style="background: #2563eb; color: #ffffff; border: 0; padding: 9px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s ease; height: 38px;"/>
+                    </div>
+                </div>
+                <h:panelGroup rendered="#{policyBean.customResult != null}">
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-top: 8px; display: flex; flex-direction: column; gap: 8px; font-size: 13px;">
+                        <div style="color: #475569;">
+                            <strong style="color: #0f172a;">Parsed as (expression tree):</strong> 
+                            <code style="font-family: monospace; color: #2563eb; background: #eff6ff; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">#{policyBean.customAst}</code>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="color: #0f172a; font-weight: 600;">Result:</span>
+                            <h:panelGroup rendered="#{policyBean.customMatched != null and policyBean.customMatched}">
+                                <span style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 2px 8px; border-radius: 4px; font-weight: 700;">#{policyBean.customResult}</span>
+                            </h:panelGroup>
+                            <h:panelGroup rendered="#{policyBean.customMatched != null and not policyBean.customMatched}">
+                                <span style="background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; padding: 2px 8px; border-radius: 4px; font-weight: 700;">#{policyBean.customResult}</span>
+                            </h:panelGroup>
+                            <h:panelGroup rendered="#{policyBean.customMatched == null}">
+                                <span style="color: #be123c; font-weight: 600;">#{policyBean.customResult}</span>
+                            </h:panelGroup>
+                        </div>
+                    </div>
+                </h:panelGroup>
+            </h:form>
         </section>
     </ui:define>
 </ui:composition>

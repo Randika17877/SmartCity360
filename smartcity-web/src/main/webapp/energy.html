@@ -9,28 +9,150 @@
     <ui:define name="title">Energy Monitoring</ui:define>
 
     <ui:define name="content">
-        <section class="panel">
-            <p>"Protect sample" wraps the reading in decorators: HMAC signature → gzip → AES-256-GCM encryption.</p>
-            <h:form>
-                <h:messages styleClass="messages" infoClass="info" errorClass="error"/>
-                <div class="formrow">
-                    <h:inputText value="#{energyBean.reading.meterCode}" pt:placeholder="Meter code"/>
-                    <h:inputText value="#{energyBean.reading.kilowattHours}" pt:placeholder="kWh"/>
-                    <h:commandButton value="Record reading" action="#{energyBean.record}"/>
-                    <h:commandButton value="Protect sample" action="#{energyBean.protect}"/>
-                </div>
-                <h:panelGroup rendered="#{not empty energyBean.protectedOutput}">
-                    <p>Protected payload:</p>
-                    <code class="output">#{energyBean.protectedOutput}</code>
-                </h:panelGroup>
-            </h:form>
+        <!-- Subtitle and Decorator Pattern Description Banner -->
+        <div style="margin-bottom: 24px; font-size: 14px; color: #475569; line-height: 1.6;">
+            <span style="display: inline-block; background: #e0e7ff; color: #3730a3; padding: 2px 10px; border-radius: 12px; font-weight: 600; font-size: 12px; margin-right: 8px;">Decorator pattern</span>
+            Security layers are wrapped around the meter stream at runtime. The meter's own code never changes.
+        </div>
 
-            <h:dataTable value="#{energyBean.readings}" var="e" styleClass="data">
-                <h:column><f:facet name="header">Meter</f:facet>#{e.meterCode}</h:column>
-                <h:column><f:facet name="header">kWh</f:facet>#{e.kilowattHours}</h:column>
-                <h:column><f:facet name="header">Recorded</f:facet>#{e.recordedAt}</h:column>
-            </h:dataTable>
+        <h:messages styleClass="messages" infoClass="messages info" errorClass="messages error" style="margin-bottom: 20px;"/>
+
+        <!-- Top Panel: Choose the layers (inner to outer) -->
+        <section class="panel" style="background: #ffffff; border: 1px solid #e2e8f0; border-top: 3px solid #2563eb; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); margin-bottom: 24px; margin-top: 0;">
+            <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 17px; font-weight: 700; color: #0f172a;">Choose the layers (inner to outer)</h3>
+            <h:form style="display: flex; flex-direction: column; gap: 18px;">
+                <div style="display: grid; grid-template-columns: 2fr 1.2fr 1.2fr 1.2fr auto; gap: 14px; align-items: flex-end;">
+                    <div>
+                        <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 6px; font-weight: 600;">Meter (from MySQL)</label>
+                        <h:selectOneMenu value="#{energyBean.selectedMeterCode}"
+                                         style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: #fff; color: #1e293b; box-sizing: border-box;">
+                            <f:selectItem itemValue="EM-1001" itemLabel="EM-1001 - Galle Road, Colombo 03"/>
+                            <f:selectItem itemValue="EM-1002" itemLabel="EM-1002 - Dharmapala Mawatha, Colombo 03"/>
+                            <f:selectItem itemValue="EM-1003" itemLabel="EM-1003 - Ward Place, Colombo 07"/>
+                        </h:selectOneMenu>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 6px; font-weight: 600;">Layer 1 (inner)</label>
+                        <h:selectOneMenu value="#{energyBean.layer1}"
+                                         style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: #fff; color: #1e293b; box-sizing: border-box;">
+                            <f:selectItem itemValue="AUTHENTICATION" itemLabel="Authentication"/>
+                            <f:selectItem itemValue="COMPRESSION" itemLabel="Compression"/>
+                            <f:selectItem itemValue="ENCRYPTION" itemLabel="Encryption"/>
+                            <f:selectItem itemValue="NONE" itemLabel="(None)"/>
+                        </h:selectOneMenu>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 6px; font-weight: 600;">Layer 2</label>
+                        <h:selectOneMenu value="#{energyBean.layer2}"
+                                         style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: #fff; color: #1e293b; box-sizing: border-box;">
+                            <f:selectItem itemValue="COMPRESSION" itemLabel="Compression"/>
+                            <f:selectItem itemValue="AUTHENTICATION" itemLabel="Authentication"/>
+                            <f:selectItem itemValue="ENCRYPTION" itemLabel="Encryption"/>
+                            <f:selectItem itemValue="NONE" itemLabel="(None)"/>
+                        </h:selectOneMenu>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 6px; font-weight: 600;">Layer 3 (outer)</label>
+                        <h:selectOneMenu value="#{energyBean.layer3}"
+                                         style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: #fff; color: #1e293b; box-sizing: border-box;">
+                            <f:selectItem itemValue="ENCRYPTION" itemLabel="Encryption"/>
+                            <f:selectItem itemValue="AUTHENTICATION" itemLabel="Authentication"/>
+                            <f:selectItem itemValue="COMPRESSION" itemLabel="Compression"/>
+                            <f:selectItem itemValue="NONE" itemLabel="(None)"/>
+                        </h:selectOneMenu>
+                    </div>
+                    <div style="padding-bottom: 10px; display: flex; align-items: center; gap: 8px; white-space: nowrap;">
+                        <h:selectBooleanCheckbox value="#{energyBean.attackerChangesData}" id="tamperCheck"/>
+                        <label for="tamperCheck" style="font-size: 13px; color: #334155; font-weight: 500; cursor: pointer;">An attacker changes the data</label>
+                    </div>
+                </div>
+                <div>
+                    <h:commandButton value="Send the data" action="#{energyBean.sendData}"
+                                     style="background: #2563eb; color: #ffffff; border: 0; padding: 10px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s ease;"/>
+                </div>
+            </h:form>
         </section>
+
+        <!-- Pipeline Steps when Report is Available -->
+        <h:panelGroup layout="block" rendered="#{energyBean.report != null}">
+            <!-- 1. The sender adds the layers -->
+            <section class="panel" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); margin-bottom: 24px;">
+                <h3 style="margin-top: 0; margin-bottom: 8px; font-size: 17px; font-weight: 700; color: #0f172a;">1. The sender adds the layers</h3>
+                <div style="font-size: 13px; color: #475569; margin-bottom: 16px;">
+                    Final chain: <strong style="color: #0f172a;">#{energyBean.report.finalChain}</strong>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid #cbd5e1; text-align: left; background: #f8fafc;">
+                            <th style="padding: 12px; font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px; width: 100px;">STEP</th>
+                            <th style="padding: 12px; font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px; width: 340px;">LAYERS</th>
+                            <th style="padding: 12px; font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px; width: 90px;">SIZE</th>
+                            <th style="padding: 12px; font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.5px;">DATA PREVIEW</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <ui:repeat value="#{energyBean.report.senderSteps}" var="st">
+                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                                <td style="padding: 14px 12px; font-weight: 600; color: #475569;">#{st.step}</td>
+                                <td style="padding: 14px 12px; font-weight: 500; color: #0f172a;">#{st.layers}</td>
+                                <td style="padding: 14px 12px; color: #64748b; font-size: 13px;">#{st.sizeFormatted}</td>
+                                <td style="padding: 14px 12px; font-family: monospace; font-size: 12px; color: #334155; word-break: break-all;">
+                                    #{st.dataPreview}
+                                </td>
+                            </tr>
+                        </ui:repeat>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- 2. On the network -->
+            <section class="panel" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); margin-bottom: 24px;">
+                <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 17px; font-weight: 700; color: #0f172a;">2. On the network</h3>
+                <div style="display: flex; align-items: center; gap: 12px; font-size: 14px;">
+                    <h:panelGroup rendered="#{not energyBean.report.tampered}">
+                        <span style="display: inline-block; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 3px 12px; border-radius: 6px; font-weight: 700; font-size: 12px;">Unchanged</span>
+                        <span style="color: #334155;">#{energyBean.report.networkMessage}</span>
+                    </h:panelGroup>
+                    <h:panelGroup rendered="#{energyBean.report.tampered}">
+                        <span style="display: inline-block; background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; padding: 3px 12px; border-radius: 6px; font-weight: 700; font-size: 12px;">Tampered</span>
+                        <span style="color: #991b1b; font-weight: 600;">#{energyBean.report.networkMessage}</span>
+                    </h:panelGroup>
+                </div>
+            </section>
+
+            <!-- 3. The control centre removes the layers in REVERSE order -->
+            <section class="panel" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); margin-bottom: 24px;">
+                <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 17px; font-weight: 700; color: #0f172a;">3. The control centre removes the layers in REVERSE order</h3>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <ui:repeat value="#{energyBean.report.receiverSteps}" var="r">
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            <div style="font-weight: 600; color: #0f172a; font-size: 14px;">#{r.operation}</div>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <h:panelGroup rendered="#{r.success}">
+                                    <span style="display: inline-block; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 3px 10px; border-radius: 4px; font-weight: 700; font-size: 12px;">OK</span>
+                                </h:panelGroup>
+                                <h:panelGroup rendered="#{not r.success}">
+                                    <span style="display: inline-block; background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; padding: 3px 10px; border-radius: 4px; font-weight: 700; font-size: 12px;">FAILED</span>
+                                    <span style="color: #991b1b; font-size: 13px;">(#{r.detail})</span>
+                                </h:panelGroup>
+                            </div>
+                        </div>
+                    </ui:repeat>
+                </div>
+            </section>
+
+            <!-- Final Outcome Summary Banner -->
+            <h:panelGroup rendered="#{energyBean.report.allPassed}">
+                <div style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #047857; padding: 16px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; margin-bottom: 20px;">
+                    #{energyBean.report.summaryMessage}
+                </div>
+            </h:panelGroup>
+            <h:panelGroup rendered="#{not energyBean.report.allPassed}">
+                <div style="background: #fff1f2; border: 1px solid #fecdd3; color: #be123c; padding: 16px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; margin-bottom: 20px;">
+                    #{energyBean.report.summaryMessage}
+                </div>
+            </h:panelGroup>
+        </h:panelGroup>
     </ui:define>
 </ui:composition>
 </html>
