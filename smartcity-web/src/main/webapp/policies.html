@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:pt="jakarta.faces.passthrough">
+<ui:composition template="/WEB-INF/templates/layout.html">
+    <ui:define name="eyebrow">INTERPRETER PATTERN</ui:define>
+    <ui:define name="title">City Policies</ui:define>
+
+    <ui:define name="content">
+        <section class="panel">
+            <p>Rules are comparisons (<code>&gt; &gt;= &lt; &lt;= == !=</code>) joined with <code>AND</code> / <code>OR</code>;
+               <code>AND</code> binds tighter. Variables available to the test: <code>noiseDb</code>, <code>hour</code>.
+               Example: <code>noiseDb &gt; 60 AND hour &gt;= 22</code>.</p>
+            <h:form>
+                <h:messages styleClass="messages" infoClass="info" errorClass="error"/>
+                <div class="formrow">
+                    <h:inputText value="#{policyBean.policy.name}" pt:placeholder="Policy name"/>
+                    <h:inputText value="#{policyBean.policy.expression}" pt:placeholder="noiseDb > 60 AND hour >= 22"/>
+                    <h:commandButton value="Save policy" action="#{policyBean.save}"/>
+                </div>
+                <div class="formrow">
+                    <h:inputText value="#{policyBean.noiseDb}" pt:placeholder="Sample noiseDb"/>
+                    <h:inputText value="#{policyBean.hour}" pt:placeholder="Sample hour"/>
+                    <h:commandButton value="Test expression" action="#{policyBean.evaluate}"/>
+                </div>
+                <h:outputText value="#{policyBean.testResult}" styleClass="result"/>
+            </h:form>
+
+            <h:dataTable value="#{policyBean.policies}" var="p" styleClass="data">
+                <h:column><f:facet name="header">Name</f:facet>#{p.name}</h:column>
+                <h:column><f:facet name="header">Expression</f:facet><code>#{p.expression}</code></h:column>
+                <h:column><f:facet name="header">Enabled</f:facet>#{p.enabled ? 'Yes' : 'No'}</h:column>
+            </h:dataTable>
+        </section>
+    </ui:define>
+</ui:composition>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:pt="jakarta.faces.passthrough">
+<ui:composition template="/WEB-INF/templates/layout.html">
+    <ui:define name="eyebrow">DECORATOR PATTERN</ui:define>
+    <ui:define name="title">Energy Monitoring</ui:define>
+
+    <ui:define name="content">
+        <section class="panel">
+            <p>"Protect sample" wraps the reading in decorators: HMAC signature → gzip → AES-256-GCM encryption.</p>
+            <h:form>
+                <h:messages styleClass="messages" infoClass="info" errorClass="error"/>
+                <div class="formrow">
+                    <h:inputText value="#{energyBean.reading.meterCode}" pt:placeholder="Meter code"/>
+                    <h:inputText value="#{energyBean.reading.kilowattHours}" pt:placeholder="kWh"/>
+                    <h:commandButton value="Record reading" action="#{energyBean.record}"/>
+                    <h:commandButton value="Protect sample" action="#{energyBean.protect}"/>
+                </div>
+                <h:panelGroup rendered="#{not empty energyBean.protectedOutput}">
+                    <p>Protected payload:</p>
+                    <code class="output">#{energyBean.protectedOutput}</code>
+                </h:panelGroup>
+            </h:form>
+
+            <h:dataTable value="#{energyBean.readings}" var="e" styleClass="data">
+                <h:column><f:facet name="header">Meter</f:facet>#{e.meterCode}</h:column>
+                <h:column><f:facet name="header">kWh</f:facet>#{e.kilowattHours}</h:column>
+                <h:column><f:facet name="header">Recorded</f:facet>#{e.recordedAt}</h:column>
+            </h:dataTable>
+        </section>
+    </ui:define>
+</ui:composition>
+</html>

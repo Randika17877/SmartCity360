@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:pt="jakarta.faces.passthrough">
+<ui:composition template="/WEB-INF/templates/layout.html">
+    <ui:define name="eyebrow">COMPOSITE PATTERN</ui:define>
+    <ui:define name="title">City Zones</ui:define>
+
+    <ui:define name="content">
+        <section class="panel">
+            <p>A city contains districts, districts contain streets, streets contain buildings.
+               Choose the type and give the ID of its parent (cities have none).</p>
+            <h:form>
+                <h:messages styleClass="messages" infoClass="info" errorClass="error"/>
+                <div class="formrow">
+                    <h:inputText value="#{zoneBean.zone.name}" pt:placeholder="Zone name"/>
+                    <h:selectOneMenu value="#{zoneBean.zone.type}">
+                        <f:selectItems value="#{zoneBean.types}" var="t" itemValue="#{t}" itemLabel="#{t}"/>
+                    </h:selectOneMenu>
+                    <h:inputText value="#{zoneBean.zone.parentId}" pt:placeholder="Parent ID"/>
+                    <h:commandButton value="Save zone" action="#{zoneBean.save}"/>
+                </div>
+            </h:form>
+
+            <h:dataTable value="#{zoneBean.zones}" var="z" styleClass="data">
+                <h:column><f:facet name="header">ID</f:facet>#{z.id}</h:column>
+                <h:column><f:facet name="header">Name</f:facet>#{z.name}</h:column>
+                <h:column><f:facet name="header">Type</f:facet>#{z.type}</h:column>
+                <h:column><f:facet name="header">Parent ID</f:facet>#{z.parentId}</h:column>
+            </h:dataTable>
+        </section>
+
+        <section class="panel">
+            <h3>Broadcast a command</h3>
+            <p>Sends one command to a zone; the Composite forwards it to every zone and building beneath it.</p>
+            <h:form>
+                <div class="formrow">
+                    <h:inputText value="#{zoneBean.targetZoneId}" pt:placeholder="Zone ID"/>
+                    <h:inputText value="#{zoneBean.command}" pt:placeholder="Command"/>
+                    <h:commandButton value="Broadcast" action="#{zoneBean.broadcast}"/>
+                </div>
+            </h:form>
+            <ul class="log"><ui:repeat value="#{zoneBean.broadcastLog}" var="line"><li>#{line}</li></ui:repeat></ul>
+        </section>
+    </ui:define>
+</ui:composition>
+</html>

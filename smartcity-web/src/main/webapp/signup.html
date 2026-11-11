@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:pt="jakarta.faces.passthrough">
+<ui:composition template="/WEB-INF/templates/layout.html">
+    <f:metadata>
+        <f:viewAction action="#{authBean.redirectIfLoggedIn}"/>
+    </f:metadata>
+
+    <ui:define name="eyebrow">REGISTRATION</ui:define>
+    <ui:define name="title">Sign Up</ui:define>
+
+    <ui:define name="content">
+        <div class="auth-wrapper" style="display: flex; justify-content: center; align-items: flex-start; padding: 20px 0;">
+            <section class="panel auth-card" style="width: 100%; max-width: 480px; padding: 32px; background: #ffffff; border-radius: 14px; box-shadow: 0 8px 24px rgba(35, 59, 100, 0.1);">
+                <h3 style="margin-top: 0; margin-bottom: 6px; font-size: 22px; color: #101d35;">Create an Account</h3>
+                <p class="subtitle" style="margin-top: 0; margin-bottom: 24px; color: #718098; font-size: 14px; line-height: 1.5;">
+                    Join SmartCity360 to submit complaints, monitor energy and manage urban systems.
+                </p>
+
+                <h:messages globalOnly="true" infoClass="messages info" errorClass="messages error" styleClass="messages" style="margin-bottom: 16px;"/>
+
+                <h:form styleClass="auth-form" style="display: flex; flex-direction: column; gap: 16px;">
+                    <div class="auth-field" style="display: flex; flex-direction: column; gap: 6px;">
+                        <label style="font-size: 13px; font-weight: 600; color: #1d2b43;">Full Name</label>
+                        <h:inputText id="fullName" value="#{authBean.regFullName}" required="true"
+                                     requiredMessage="Please enter your full name"
+                                     pt:placeholder="e.g. Jane Doe"
+                                     style="padding: 11px 13px; border: 1px solid #d9e1ed; border-radius: 8px; font-size: 14px; width: 100%; box-sizing: border-box;"/>
+                    </div>
+
+                    <div class="auth-field" style="display: flex; flex-direction: border-box; flex-direction: column; gap: 6px;">
+                        <label style="font-size: 13px; font-weight: 600; color: #1d2b43;">Username</label>
+                        <h:inputText id="username" value="#{authBean.regUsername}" required="true"
+                                     requiredMessage="Please choose a username"
+                                     pt:placeholder="e.g. janedoe"
+                                     style="padding: 11px 13px; border: 1px solid #d9e1ed; border-radius: 8px; font-size: 14px; width: 100%; box-sizing: border-box;"/>
+                    </div>
+
+                    <div class="auth-field" style="display: flex; flex-direction: column; gap: 6px;">
+                        <label style="font-size: 13px; font-weight: 600; color: #1d2b43;">Email Address</label>
+                        <h:inputText id="email" value="#{authBean.regEmail}" required="true"
+                                     requiredMessage="Please enter your email"
+                                     pt:placeholder="e.g. jane@example.com"
+                                     style="padding: 11px 13px; border: 1px solid #d9e1ed; border-radius: 8px; font-size: 14px; width: 100%; box-sizing: border-box;"/>
+                    </div>
+
+                    <div class="auth-field" style="display: flex; flex-direction: column; gap: 6px;">
+                        <label style="font-size: 13px; font-weight: 600; color: #1d2b43;">Assigned Role</label>
+                        <div style="padding: 11px 13px; background: #f4f6fa; border: 1px solid #d9e1ed; border-radius: 8px; font-size: 14px; color: #37475f; display: flex; align-items: center; justify-content: space-between;">
+                            <span><strong>Citizen / Resident</strong></span>
+                            <span style="font-size: 12px; color: #718098; background: #e2e8f0; padding: 2px 8px; border-radius: 12px;">Public Account</span>
+                        </div>
+                        <small style="font-size: 12px; color: #718098; line-height: 1.4;">
+                            Public sign-up is restricted to Citizen accounts. Operations Officer and Administrator accounts are provisioned internally.
+                        </small>
+                    </div>
+
+                    <div class="auth-field" style="display: flex; flex-direction: column; gap: 6px;">
+                        <label style="font-size: 13px; font-weight: 600; color: #1d2b43;">Password (min 6 characters)</label>
+                        <h:inputSecret id="regPass" value="#{authBean.regPassword}" required="true"
+                                       requiredMessage="Please choose a password"
+                                       pt:placeholder="••••••••"
+                                       style="padding: 11px 13px; border: 1px solid #d9e1ed; border-radius: 8px; font-size: 14px; width: 100%; box-sizing: border-box;"/>
+                    </div>
+
+                    <div class="auth-field" style="display: flex; flex-direction: column; gap: 6px;">
+                        <label style="font-size: 13px; font-weight: 600; color: #1d2b43;">Confirm Password</label>
+                        <h:inputSecret id="confirmPass" value="#{authBean.regConfirmPassword}" required="true"
+                                       requiredMessage="Please confirm your password"
+                                       pt:placeholder="••••••••"
+                                       style="padding: 11px 13px; border: 1px solid #d9e1ed; border-radius: 8px; font-size: 14px; width: 100%; box-sizing: border-box;"/>
+                    </div>
+
+                    <h:commandButton value="Create Account" action="#{authBean.signUp}" styleClass="auth-btn"
+                                     style="padding: 12px; background: #2764d8; color: #fff; border: 0; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px; width: 100%;"/>
+                </h:form>
+
+                <div class="auth-footer" style="margin-top: 22px; text-align: center; font-size: 13px; color: #718098;">
+                    <span>Already have an account? </span>
+                    <h:link outcome="signin" value="Sign In" style="color: #2764d8; font-weight: 600; text-decoration: none;"/>
+                </div>
+            </section>
+        </div>
+    </ui:define>
+</ui:composition>
+</html>

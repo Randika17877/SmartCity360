@@ -1,0 +1,10 @@
+@startuml
+interface CityComponent { +getName():String +execute(command:String):List<String> }
+class ZoneGroup
+class ZoneTreeBuilder { +index(zones):Map
++roots(zones):List }
+class Building
+CityComponent <|.. ZoneGroup
+CityComponent <|.. Building
+ZoneGroup o--> "0..*" CityComponent : children
+@enduml

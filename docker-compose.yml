@@ -1,0 +1,18 @@
+# Local MySQL for development. The schema and seed data in ./database are
+# loaded automatically the first time the container starts.
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: smartcity360-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: smartcity360
+      MYSQL_USER: smartcity
+      MYSQL_PASSWORD: smartcity
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./database/smartcity360.sql:/docker-entrypoint-initdb.d/01-smartcity360.sql:ro
+      - mysql-data:/var/lib/mysql
+volumes:
+  mysql-data:

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:ui="jakarta.faces.facelets">
+<ui:composition template="/WEB-INF/templates/layout.html">
+    <ui:define name="title">City Operations Dashboard</ui:define>
+
+    <ui:define name="content">
+        <div class="cards">
+            <section class="metric">
+                <small>REGISTERED ZONES</small>
+                <strong>#{dashboardBean.zoneCount}</strong>
+                <p>Cities, districts, streets, buildings</p>
+            </section>
+            <section class="metric">
+                <small>PENDING COMPLAINTS</small>
+                <strong>#{dashboardBean.pendingComplaints}</strong>
+                <p>Awaiting resolution</p>
+            </section>
+            <section class="metric">
+                <small>ACTIVE STREETLIGHTS</small>
+                <strong>#{dashboardBean.activeStreetlights}</strong>
+                <p>Currently switched on</p>
+            </section>
+            <section class="metric">
+                <small>ENERGY RECORDED</small>
+                <strong>#{dashboardBean.totalEnergy} kWh</strong>
+                <p>All meter readings</p>
+            </section>
+        </div>
+        <section class="panel">
+            <h3>Modules</h3>
+            <div class="module-grid">
+                <h:link outcome="complaints" value="Escalate complaints (Chain of Responsibility) →"/>
+                <h:link outcome="zones" value="Manage the city hierarchy (Composite) →" rendered="#{authBean.staffOrAdmin}"/>
+                <h:link outcome="energy" value="Protect energy streams (Decorator) →" rendered="#{authBean.staffOrAdmin}"/>
+                <h:link outcome="streetlights" value="Manage streetlights (Flyweight) →" rendered="#{authBean.staffOrAdmin}"/>
+                <h:link outcome="policies" value="Evaluate policies (Interpreter) →" rendered="#{authBean.staffOrAdmin}"/>
+            </div>
+            <h:panelGroup rendered="#{authBean.citizen}" layout="block" style="margin-top: 14px; font-size: 13px; color: #64748b; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px;">
+                ℹ️ <strong>Citizen Account:</strong> You can submit and monitor citizen complaints. Administrative operations (City Zones, Energy Streams, Streetlights, and Policies) require a City Operations Officer or Administrator account.
+            </h:panelGroup>
+        </section>
+    </ui:define>
+</ui:composition>
+</html>

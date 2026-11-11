@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:pt="jakarta.faces.passthrough">
+<ui:composition template="/WEB-INF/templates/layout.html">
+    <ui:define name="eyebrow">FLYWEIGHT PATTERN</ui:define>
+    <ui:define name="title">Smart Streetlights</ui:define>
+
+    <ui:define name="content">
+        <section class="panel">
+            <p>Each light keeps its own location and state; model, wattage and colour are shared through a pool.</p>
+            <h:form>
+                <h:messages styleClass="messages" infoClass="info" errorClass="error"/>
+                <div class="formrow">
+                    <h:inputText value="#{streetlightBean.light.code}" pt:placeholder="Light code"/>
+                    <h:inputText value="#{streetlightBean.light.location}" pt:placeholder="Location"/>
+                    <h:inputText value="#{streetlightBean.light.model}" pt:placeholder="Model"/>
+                    <h:inputText value="#{streetlightBean.light.wattage}" pt:placeholder="Watts"/>
+                    <h:inputText value="#{streetlightBean.light.colour}" pt:placeholder="Colour"/>
+                    <h:commandButton value="Register light" action="#{streetlightBean.save}"/>
+                    <h:commandButton value="Show flyweight pool" action="#{streetlightBean.showFlyweight}"/>
+                </div>
+                <h:panelGroup rendered="#{streetlightBean.report != null}">
+                    <p><strong>#{streetlightBean.report.summary()}</strong></p>
+                    <ul class="log"><ui:repeat value="#{streetlightBean.report.lines}" var="line"><li>#{line}</li></ui:repeat></ul>
+                </h:panelGroup>
+            </h:form>
+
+            <h:form>
+                <h:dataTable value="#{streetlightBean.lights}" var="s" styleClass="data">
+                    <h:column><f:facet name="header">ID</f:facet>#{s.id}</h:column>
+                    <h:column><f:facet name="header">Code</f:facet>#{s.code}</h:column>
+                    <h:column><f:facet name="header">Location</f:facet>#{s.location}</h:column>
+                    <h:column><f:facet name="header">Type</f:facet>#{s.model} · #{s.wattage}W · #{s.colour}</h:column>
+                    <h:column><f:facet name="header">State</f:facet>#{s.active ? 'ON' : 'OFF'}</h:column>
+                    <h:column>
+                        <h:commandButton value="#{s.active ? 'Switch off' : 'Switch on'}"
+                                         action="#{streetlightBean.toggle(s.id, !s.active)}"/>
+                    </h:column>
+                </h:dataTable>
+            </h:form>
+        </section>
+    </ui:define>
+</ui:composition>
+</html>

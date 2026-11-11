@@ -1,0 +1,7 @@
+@startuml
+class LightType { -model:String -wattage:int -colour:String }
+class LightTypeFactory { +get(model,wattage,colour):LightType +cachedTypes():int }
+class StreetLightContext { -location:String -on:boolean -sharedType:LightType }
+LightTypeFactory ..> LightType : creates/caches
+StreetLightContext --> LightType : shared intrinsic state
+@enduml

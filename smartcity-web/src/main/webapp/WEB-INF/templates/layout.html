@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:ui="jakarta.faces.facelets">
+<h:head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>SmartCity360 | <ui:insert name="title">Home</ui:insert></title>
+    <h:outputStylesheet library="css" name="style.css"/>
+</h:head>
+<h:body>
+    <div class="layout">
+        <aside>
+            <h1>SmartCity<span>360</span></h1>
+            <p>URBANTECH SOLUTIONS</p>
+
+            <h:panelGroup rendered="#{authBean.loggedIn}" layout="block" styleClass="user-profile-box">
+                <span class="user-name">#{authBean.currentUser.fullName}</span>
+                <span class="user-role">#{authBean.currentUser.role}</span>
+                <h:form style="margin: 0;">
+                    <h:commandButton action="#{authBean.signOut}" value="Sign Out" styleClass="btn-signout"/>
+                </h:form>
+            </h:panelGroup>
+
+            <nav>
+                <h:link outcome="dashboard" value="Dashboard"/>
+                <h:link outcome="complaints" value="Complaints"/>
+
+                <!-- Administrative Modules: Visible to Officer and Administrator accounts only -->
+                <h:panelGroup rendered="#{authBean.staffOrAdmin}">
+                    <div style="font-size: 11px; text-transform: uppercase; color: #64748b; margin: 12px 0 6px 0; font-weight: 700; letter-spacing: 0.5px;">Administration</div>
+                    <h:link outcome="zones" value="City Zones"/>
+                    <h:link outcome="energy" value="Energy"/>
+                    <h:link outcome="streetlights" value="Streetlights"/>
+                    <h:link outcome="policies" value="Policies"/>
+                </h:panelGroup>
+
+                <h:panelGroup rendered="#{!authBean.loggedIn}">
+                    <hr style="border: 0; border-top: 1px solid #253b60; margin: 10px 0;"/>
+                    <h:link outcome="signin" value="Sign In"/>
+                    <h:link outcome="signup" value="Sign Up"/>
+                </h:panelGroup>
+            </nav>
+        </aside>
+        <main>
+            <header style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <small><ui:insert name="eyebrow">OVERVIEW</ui:insert></small>
+                    <h2><ui:insert name="title">Home</ui:insert></h2>
+                </div>
+                <div style="text-align: right; margin-top: 6px;">
+                    <h:panelGroup rendered="#{authBean.loggedIn}">
+                        <span style="font-size: 13px; color: var(--muted);">Signed in as </span>
+                        <strong style="color: var(--navy);">#{authBean.currentUser.username}</strong>
+                        <span style="margin-left: 6px; font-size: 11px; padding: 2px 7px; border-radius: 4px; background: #e0e7ff; color: #3730a3; font-weight: 600;">#{authBean.currentUser.role}</span>
+                    </h:panelGroup>
+                    <h:panelGroup rendered="#{!authBean.loggedIn}">
+                        <h:link outcome="signin" value="Sign In" style="font-size: 14px; color: var(--blue); text-decoration: none; font-weight: 600; margin-right: 12px;"/>
+                        <h:link outcome="signup" value="Sign Up" style="font-size: 14px; color: #fff; background: var(--blue); padding: 7px 14px; border-radius: 6px; text-decoration: none; font-weight: 600;"/>
+                    </h:panelGroup>
+                </div>
+            </header>
+            <ui:insert name="content"/>
+            <footer>SmartCity360 · Object Oriented Design Patterns II</footer>
+        </main>
+    </div>
+</h:body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:pt="jakarta.faces.passthrough">
+<ui:composition template="/WEB-INF/templates/layout.html">
+    <ui:define name="eyebrow">CHAIN OF RESPONSIBILITY</ui:define>
+    <ui:define name="title">Citizen Complaints</ui:define>
+
+    <ui:define name="content">
+        <section class="panel">
+            <p>Severity 1–2 goes to local staff, 3–4 to a supervisor and 5 to the city manager.</p>
+            <h:form>
+                <h:messages styleClass="messages" infoClass="info" errorClass="error"/>
+                <div class="formrow">
+                    <h:inputText value="#{complaintBean.complaint.residentName}" pt:placeholder="Resident name"/>
+                    <h:inputText value="#{complaintBean.complaint.description}" pt:placeholder="Complaint description"/>
+                    <h:inputText value="#{complaintBean.complaint.severity}" pt:placeholder="Severity 1-5"/>
+                    <h:commandButton value="Submit complaint" action="#{complaintBean.submit}"/>
+                </div>
+            </h:form>
+
+            <h:form>
+                <h:dataTable value="#{complaintBean.complaints}" var="c" styleClass="data">
+                    <h:column><f:facet name="header">ID</f:facet>#{c.id}</h:column>
+                    <h:column><f:facet name="header">Resident</f:facet>#{c.residentName}</h:column>
+                    <h:column><f:facet name="header">Description</f:facet>#{c.description}</h:column>
+                    <h:column><f:facet name="header">Severity</f:facet>#{c.severity}</h:column>
+                    <h:column><f:facet name="header">Assigned to</f:facet>#{c.assignedLevel.label}</h:column>
+                    <h:column><f:facet name="header">Status</f:facet>#{c.status.label}</h:column>
+                    <h:column>
+                        <h:commandButton value="Resolve" action="#{complaintBean.resolve(c.id)}"
+                                         rendered="#{c.status != 'RESOLVED'}"/>
+                    </h:column>
+                </h:dataTable>
+            </h:form>
+        </section>
+    </ui:define>
+</ui:composition>
+</html>

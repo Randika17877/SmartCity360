@@ -1,0 +1,17 @@
+@startuml
+interface Expression { +interpret(context):boolean }
+class ComparisonExpression
+class AndExpression
+class OrExpression
+enum Operator
+class PolicyContext
+class PolicyParser { +parse(source):Expression }
+Expression <|.. ComparisonExpression
+Expression <|.. AndExpression
+Expression <|.. OrExpression
+AndExpression o--> Expression : left/right
+OrExpression o--> Expression : left/right
+ComparisonExpression --> Operator
+Expression ..> PolicyContext
+PolicyParser ..> Expression : builds
+@enduml

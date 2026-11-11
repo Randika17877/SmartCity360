@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:pt="jakarta.faces.passthrough">
+<ui:composition template="/WEB-INF/templates/layout.html">
+    <f:metadata>
+        <f:viewAction action="#{authBean.redirectIfLoggedIn}"/>
+    </f:metadata>
+
+    <ui:define name="eyebrow">AUTHENTICATION</ui:define>
+    <ui:define name="title">Sign In</ui:define>
+
+    <ui:define name="content">
+        <div class="auth-wrapper" style="display: flex; justify-content: center; align-items: flex-start; padding: 20px 0;">
+            <section class="panel auth-card" style="width: 100%; max-width: 440px; padding: 32px; background: #ffffff; border-radius: 14px; box-shadow: 0 8px 24px rgba(35, 59, 100, 0.1);">
+                <h3 style="margin-top: 0; margin-bottom: 6px; font-size: 22px; color: #101d35;">Sign in to SmartCity360</h3>
+                <p class="subtitle" style="margin-top: 0; margin-bottom: 24px; color: #718098; font-size: 14px; line-height: 1.5;">
+                    Access city management tools and real-time operations.
+                </p>
+
+                <h:messages globalOnly="true" infoClass="messages info" errorClass="messages error" styleClass="messages" style="margin-bottom: 16px;"/>
+
+                <h:form styleClass="auth-form" style="display: flex; flex-direction: column; gap: 16px;">
+                    <div class="auth-field" style="display: flex; flex-direction: column; gap: 6px;">
+                        <label style="font-size: 13px; font-weight: 600; color: #1d2b43;">Username or Email</label>
+                        <h:inputText id="loginInput" value="#{authBean.login}" required="true"
+                                     requiredMessage="Please enter your username or email"
+                                     pt:placeholder="admin or your email"
+                                     style="padding: 11px 13px; border: 1px solid #d9e1ed; border-radius: 8px; font-size: 14px; width: 100%; box-sizing: border-box;"/>
+                    </div>
+
+                    <div class="auth-field" style="display: flex; flex-direction: column; gap: 6px;">
+                        <label style="font-size: 13px; font-weight: 600; color: #1d2b43;">Password</label>
+                        <h:inputSecret id="passwordInput" value="#{authBean.password}" required="true"
+                                       requiredMessage="Please enter your password"
+                                       pt:placeholder="••••••••"
+                                       style="padding: 11px 13px; border: 1px solid #d9e1ed; border-radius: 8px; font-size: 14px; width: 100%; box-sizing: border-box;"/>
+                    </div>
+
+                    <h:commandButton value="Sign In" action="#{authBean.signIn}" styleClass="auth-btn"
+                                     style="padding: 12px; background: #2764d8; color: #fff; border: 0; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px; width: 100%;"/>
+                </h:form>
+
+                <div class="auth-footer" style="margin-top: 22px; text-align: center; font-size: 13px; color: #718098;">
+                    <span>Don't have an account? </span>
+                    <h:link outcome="signup" value="Sign Up" style="color: #2764d8; font-weight: 600; text-decoration: none;"/>
+                </div>
+            </section>
+        </div>
+    </ui:define>
+</ui:composition>
+</html>
