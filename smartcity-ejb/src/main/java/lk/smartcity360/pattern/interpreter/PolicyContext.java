@@ -14,9 +14,25 @@ public class PolicyContext {
     /** @throws IllegalArgumentException if the policy refers to a variable that was not supplied */
     public double get(String name) {
         Double value = values.get(name);
-        if (value == null) {
-            throw new IllegalArgumentException("Unknown variable: " + name);
+        if (value != null) {
+            return value;
         }
-        return value;
+        // Case-insensitive lookup fallback
+        for (Map.Entry<String, Double> entry : values.entrySet()) {
+            if (entry.getKey().equalsIgnoreCase(name)) {
+                return entry.getValue();
+            }
+        }
+        // Aliases for noise / sound measurements
+        if ("noiseDb".equalsIgnoreCase(name) || "soundLevel".equalsIgnoreCase(name) || "noise".equalsIgnoreCase(name)) {
+            for (Map.Entry<String, Double> entry : values.entrySet()) {
+                if ("soundLevel".equalsIgnoreCase(entry.getKey())
+                        || "noiseDb".equalsIgnoreCase(entry.getKey())
+                        || "noise".equalsIgnoreCase(entry.getKey())) {
+                    return entry.getValue();
+                }
+            }
+        }
+        throw new IllegalArgumentException("Unknown variable: " + name);
     }
 }

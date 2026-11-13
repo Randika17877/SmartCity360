@@ -54,9 +54,17 @@ class PasswordHasherTest {
 
     @Test
     void printsSampleHash() {
-        String salt = "102030405060708090a0b0c0d0e0f001";
-        String hash = PasswordHasher.hash("admin123", salt);
-        System.out.println("SAMPLE_ADMIN_HASH=" + hash);
+        String adminSalt = "102030405060708090a0b0c0d0e0f001";
+        String adminHash = PasswordHasher.hash("admin123", adminSalt);
+        System.out.println("SAMPLE_ADMIN_HASH=" + adminHash);
+
+        String officerSalt = "2030405060708090a0b0c0d0e0f00102";
+        String officerHash = PasswordHasher.hash("officer123", officerSalt);
+        System.out.println("SAMPLE_OFFICER_HASH=" + officerHash);
+
+        String citizenSalt = "30405060708090a0b0c0d0e0f0010203";
+        String citizenHash = PasswordHasher.hash("citizen123", citizenSalt);
+        System.out.println("SAMPLE_CITIZEN_HASH=" + citizenHash);
     }
 
     private void assertEqualsLength(int expected, String actual) {

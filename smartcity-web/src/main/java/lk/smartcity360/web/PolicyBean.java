@@ -193,7 +193,14 @@ public class PolicyBean implements Serializable {
             if (part.contains("=")) {
                 String[] kv = part.split("=", 2);
                 try {
-                    map.put(kv[0].trim(), Double.parseDouble(kv[1].trim()));
+                    String key = kv[0].trim();
+                    double val = Double.parseDouble(kv[1].trim());
+                    map.put(key, val);
+                    if ("soundLevel".equalsIgnoreCase(key) || "noiseDb".equalsIgnoreCase(key) || "noise".equalsIgnoreCase(key)) {
+                        map.put("soundLevel", val);
+                        map.put("noiseDb", val);
+                        map.put("noise", val);
+                    }
                 } catch (NumberFormatException e) {
                     throw new IllegalArgumentException("Invalid telemetry reading: '" + part + "'");
                 }
